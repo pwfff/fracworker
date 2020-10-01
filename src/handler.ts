@@ -83,7 +83,7 @@ function drawFractal(
       let g = (Math.sin(norm * 20 * 0.45) * 0.5 + 0.5) * 255
       let b = (Math.sin(norm * 20 * 0.65) * 0.5 + 0.5) * 255
 
-      let idx = width * y * 3 + x
+      let idx = (width * y  + x) * 3
       buffer[idx + 0] = Math.floor(r)
       buffer[idx + 1] = Math.floor(g)
       buffer[idx + 2] = Math.floor(b)
@@ -109,7 +109,7 @@ function get_rgb(
   x: number,
   y: number,
 ): { r: number; g: number; b: number } {
-  let idx = width * y * 3 + x
+  let idx = (width * y + x) * 3
   return {
     r: buffer[idx + 0],
     g: buffer[idx + 1],
