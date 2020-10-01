@@ -1,0 +1,7 @@
+name = "fractal"
+type = "webpack"
+account_id = "693dbd7e8bcc7ad68a10356f11ce8b07"
+workers_dev = true
+route = ""
+zone_id = ""
+webpack_config = "webpack.config.js"
