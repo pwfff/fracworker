@@ -2,11 +2,11 @@ export class Router {
   constructor(private routes: Route[]) {
   }
 
-  public async handle(request: Request): Promise<Response> {
+  public async handle(event: FetchEvent): Promise<Response> {
     for (let route of this.routes) {
-      let url = new URL(request.url)
+      let url = new URL(event.request.url)
       if (url.pathname == route.path) {
-        return route.handler(request)
+        return route.handler(event)
       }
     }
 
@@ -26,4 +26,4 @@ export class Route {
   }
 }
 
-export type Handler = (request: Request) => Promise<Response>
+export type Handler = (event: FetchEvent) => Promise<Response>
