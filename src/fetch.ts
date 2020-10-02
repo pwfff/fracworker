@@ -1,17 +1,41 @@
+import { Route, Router } from './router'
 import { PNG } from 'pngjs'
 
 export async function handleRequest(request: Request): Promise<Response> {
-  if (request.url.endsWith('favicon.ico')) {
-    return new Response('nah')
-  }
+  return router.handle(request)
+}
 
-  let iParam = new URL(request.url).searchParams.get('i') || '255'
+let router = new Router([
+  new Route('/favicon.ico', favicon),
+  new Route('/', fractal),
+])
+
+async function favicon(request: Request): Promise<Response> {
+  let png = new PNG({
+    width: 16,
+    height: 16,
+    bgColor: { red: 0, green: 0, blue: 0 },
+  })
+
+  drawFractal(png, 255, 22, 6)
+
+  return new Response(PNG.sync.write(png), {
+    headers: {
+      'Content-Type': 'image/png',
+    },
+  })
+}
+
+async function fractal(request: Request): Promise<Response> {
+  let url = new URL(request.url)
+
+  let iParam = url.searchParams.get('i') || '255'
   let iterations = parseInt(iParam)
 
-  let zParam = new URL(request.url).searchParams.get('z') || '1'
+  let zParam = url.searchParams.get('z') || '1'
   let zoom = parseInt(zParam)
 
-  let ssParam = new URL(request.url).searchParams.get('ss') || '1'
+  let ssParam = url.searchParams.get('ss') || '1'
   let supersample = parseInt(ssParam)
 
   let png = new PNG({
@@ -100,9 +124,9 @@ function drawFractal(
       }
 
       // average the sum of squares
-      r = Math.sqrt(r / (supersample ** 2))
-      g = Math.sqrt(g / (supersample ** 2))
-      b = Math.sqrt(b / (supersample ** 2))
+      r = Math.sqrt(r / supersample ** 2)
+      g = Math.sqrt(g / supersample ** 2)
+      b = Math.sqrt(b / supersample ** 2)
 
       let idx = (png.width * y + x) << 2
       png.data[idx + 0] = Math.floor(r)
