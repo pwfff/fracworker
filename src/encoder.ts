@@ -80,21 +80,21 @@ export class PNGEncoder {
     this._writer = writable.getWriter()
   }
 
-  start() {
-    this._write(PNG_SIGNATURE)
-    this._writeIHDR()
+  async start() {
+    await this._write(PNG_SIGNATURE)
+    await this._writeIHDR()
   }
 
-  _write(data: Uint8Array) {
-    this._writer.write(data)
+  async _write(data: Uint8Array) {
+    await this._writer.write(data)
   }
 
-  _writeCompressed(data: Uint8Array) {
+  async _writeCompressed(data: Uint8Array) {
     this._deflater.push(data, 2)
-    this._writeIDAT(this._deflater.result as Uint8Array)
+    await this._writeIDAT(this._deflater.result as Uint8Array)
   }
 
-  writePixels(data: Uint8Array) {
+  async writePixels(data: Uint8Array) {
     let buffer = this._buffer
     this._buffer = new Uint8Array(buffer.length + data.length)
     this._buffer.set(buffer, 0)
@@ -107,26 +107,26 @@ export class PNGEncoder {
       let line = this._filter(scanline)
       this._lineBuffer.push(line)
       if (this._lineBuffer.length > 20) {
-        this._flush()
+        await this._flush()
       }
     }
   }
 
-  _flush() {
+  async _flush() {
     for (let line of this._lineBuffer) {
-      this._writeCompressed(line)
+      await this._writeCompressed(line)
     }
     this._lineBuffer = []
   }
 
   async end() {
-    this._flush()
-    this._writeChunk('IEND', new Uint8Array(0))
+    await this._flush()
+    await this._writeChunk('IEND', new Uint8Array(0))
     return this._writer.close()
   }
 
   // Write's a generic PNG chunk including header, data, and CRC
-  _writeChunk(chunk: string, data: Uint8Array) {
+  async _writeChunk(chunk: string, data: Uint8Array) {
     // new buffer with room for the header
     let buffer = new Uint8Array(8 + data.length)
     buffer.set(data, 8)
@@ -140,15 +140,15 @@ export class PNGEncoder {
     buffer[6] = chunk.charCodeAt(2)
     buffer[7] = chunk.charCodeAt(3)
 
-    this._write(buffer)
+    await this._write(buffer)
 
     let crcBuffer = new Uint8Array(4)
     let crcView = new DataView(crcBuffer.buffer)
     crcView.setUint32(0, buf(buffer.slice(4)))
-    this._write(crcBuffer)
+    await this._write(crcBuffer)
   }
 
-  _writeIHDR() {
+  async _writeIHDR() {
     let buffer = new Uint8Array(13)
     let view = new DataView(buffer.buffer)
     view.setUint32(0, this.width)
@@ -159,12 +159,12 @@ export class PNGEncoder {
     buffer[11] = 0 // filter
     buffer[12] = 0 // interlace
 
-    this._writeChunk('IHDR', buffer)
+    await this._writeChunk('IHDR', buffer)
   }
 
   // Main image data
-  _writeIDAT(data: Uint8Array) {
-    this._writeChunk('IDAT', data)
+  async _writeIDAT(data: Uint8Array) {
+    await this._writeChunk('IDAT', data)
   }
 
   // Chooses the best filter for a given scanline.

@@ -113,8 +113,8 @@ export async function drawFractal(
       line[x * 3 + 1] = g
       line[x * 3 + 2] = b
     }
-    png.writePixels(line)
+    await png.writePixels(line)
   }
 
-  return png.end()
+  await png.end()
 }
