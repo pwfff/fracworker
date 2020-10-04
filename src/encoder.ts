@@ -54,9 +54,8 @@ export class PNGEncoder {
   readable: ReadableStream
   _writer: WritableStreamDefaultWriter
   _buffer: Uint8Array = new Uint8Array()
+  _lineBuffer: Uint8Array[] = []
   _sequence = 0
-  _numFrames = 0
-  _output = []
   _pixelBytes: number
   _scanlineLength: number
   _prevScanline: Uint8Array
@@ -92,9 +91,7 @@ export class PNGEncoder {
 
   _writeCompressed(data: Uint8Array) {
     this._deflater.push(data, 2)
-    console.log(this._deflater.result.length)
     this._writeIDAT(this._deflater.result as Uint8Array)
-    //await this._writable.getWriter().write(deflate.compress())
   }
 
   writePixels(data: Uint8Array) {
@@ -108,11 +105,22 @@ export class PNGEncoder {
       this._buffer = this._buffer.slice(this._scanlineLength)
 
       let line = this._filter(scanline)
-      this._writeCompressed(line)
+      this._lineBuffer.push(line)
+      if (this._lineBuffer.length > 20) {
+        this._flush()
+      }
     }
   }
 
+  _flush() {
+    for (let line of this._lineBuffer) {
+      this._writeCompressed(line)
+    }
+    this._lineBuffer = []
+  }
+
   async end() {
+    this._flush()
     this._writeChunk('IEND', new Uint8Array(0))
     return this._writer.close()
   }
