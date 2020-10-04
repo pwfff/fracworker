@@ -79,6 +79,10 @@ async function kvPut(
   event: FetchEvent,
   args: RegExpMatchArray,
 ): Promise<Response> {
+  if (args.groups.key == 'last') {
+    await FRACTAL_STORAGE.put('last', '0')
+    return new Response('ok')
+  }
   let url = new URL(event.request.url)
   let png = new PNGEncoder(800, 800)
   event.waitUntil(drawFractal(png, parseURLParams(url.searchParams)))
@@ -90,6 +94,6 @@ async function test(event: FetchEvent) {
     await handleScheduled({ waitUntil: event.waitUntil, scheduledTime: 1000 })
     return new Response('ok')
   } catch (e) {
-    return new Response(e)
+    return new Response(e.stack)
   }
 }

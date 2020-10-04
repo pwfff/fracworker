@@ -7,5 +7,5 @@ addEventListener('fetch', (event) => {
 
 addEventListener('scheduled', (event) => {
   let sEvent = event as ScheduledEvent
-  sEvent.waitUntil(handleScheduled(event as ScheduledEvent))
+  sEvent.waitUntil(handleScheduled(sEvent))
 })
