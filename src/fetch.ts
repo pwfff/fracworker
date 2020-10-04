@@ -1,6 +1,7 @@
 import { Route, Router } from './router'
 import { DefaultFractalParams, drawFractal, FractalParams } from './fractal'
 import { PNGEncoder } from './encoder'
+import { handleScheduled, ScheduledEvent } from './scheduled'
 
 export async function handleRequest(event: FetchEvent): Promise<Response> {
   return router.handle(event)
@@ -9,6 +10,7 @@ export async function handleRequest(event: FetchEvent): Promise<Response> {
 let router = new Router([
   new Route(/^\/favicon.ico$/, favicon),
   new Route(/^\/$/, fractal),
+  new Route(/^\/test$/, test),
   new Route(/^\/get\/(?<key>[^/]+)$/, kvGet),
   new Route(/^\/put\/(?<key>[^/]+)$/, kvPut),
 ])
@@ -64,9 +66,9 @@ async function kvGet(
   event: FetchEvent,
   args: RegExpMatchArray,
 ): Promise<Response> {
-  let headers = { 'Content-Type': 'image/png' }
-  if (args.groups.key != 'last') {
-    headers
+  let headers: HeadersInit = { 'Content-Type': 'image/png' }
+  if (args.groups.key == 'last') {
+    headers = {}
   }
   return new Response(await FRACTAL_STORAGE.get(args.groups.key, 'stream'), {
     headers,
@@ -78,17 +80,16 @@ async function kvPut(
   args: RegExpMatchArray,
 ): Promise<Response> {
   let url = new URL(event.request.url)
-
-  let iParam = url.searchParams.get('i') || '255'
-  let iterations = parseInt(iParam)
-
-  let zParam = url.searchParams.get('z') || '1'
-  let zoom = parseInt(zParam)
-
-  let ssParam = url.searchParams.get('ss') || '1'
-  let supersample = parseInt(ssParam)
-
   let png = new PNGEncoder(800, 800)
-  event.waitUntil(drawFractal(png, iterations, zoom, supersample))
+  event.waitUntil(drawFractal(png, parseURLParams(url.searchParams)))
   return new Response(await FRACTAL_STORAGE.put(args.groups.key, png.readable))
+}
+
+async function test(event: FetchEvent) {
+  try {
+    await handleScheduled({ waitUntil: event.waitUntil, scheduledTime: 1000 })
+    return new Response('ok')
+  } catch (e) {
+    return new Response(e)
+  }
 }

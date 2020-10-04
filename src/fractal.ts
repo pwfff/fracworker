@@ -9,12 +9,12 @@ export interface FractalParams {
 }
 
 export let DefaultFractalParams: FractalParams = {
-  iterations: 255,
+  iterations: 1023,
   zoom: 1,
   // zoomX: -0.75,
   // zoomY: -0.1,
-  zoomX: -.7496,
-  zoomY:-.1005999,
+  zoomX: -0.74542736,
+  zoomY: -0.113009,
   supersample: 1,
 }
 
@@ -34,7 +34,7 @@ export async function drawFractal(
   let height = png.height
 
   // increase the zoom rate. there's probably a better way to scale this
-  zoom = zoom ** 1.1
+  zoom = 2 ** (zoom / 4)
 
   // with supersampling, our 'canvas' is actually larger
   let ssWidth = width * supersample
@@ -65,14 +65,16 @@ export async function drawFractal(
           let i = 0
           let escape = 4
           let zn = 0
-          // let threshold = 0.001 ** 2
+          // also escape if the derivate of some kinda cool function approaches
+          // a threshold
+          // let threshold = 1 / zoom ** 4
           // let derX = 1
           // let derY = 0
           while (i < iterations && zn < escape) {
             let xt = zx * zy
             zx = zx * zx - zy * zy + cx
             zy = 2 * xt + cy
-            // if (squared_modulus(derX, derY) < threshold){
+            // if (squared_modulus(derX, derY) < threshold) {
             //   i = iterations
             //   break
             // }
@@ -82,8 +84,7 @@ export async function drawFractal(
             i++
           }
 
-          if (i >= iterations)
-            continue
+          if (i >= iterations) continue
 
           // fracIter is how far outside our bounds we escaped, for color smoothing
           let fracIter = Math.log2(Math.log(zn) / Math.log(escape))
