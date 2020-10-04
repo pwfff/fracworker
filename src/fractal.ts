@@ -1,22 +1,40 @@
-import {PNGEncoder} from './encoder'
+import { PNGEncoder } from './encoder'
+
+export interface FractalParams {
+  iterations: number
+  zoom: number
+  zoomX: number
+  zoomY: number
+  supersample: number
+}
+
+export let DefaultFractalParams: FractalParams = {
+  iterations: 255,
+  zoom: 1,
+  // zoomX: -0.75,
+  // zoomY: -0.1,
+  zoomX: -.7496,
+  zoomY:-.1005999,
+  supersample: 1,
+}
+
+function squared_modulus(x: number, y: number): number {
+  return Math.sqrt(x * x + y * y)
+}
 
 export async function drawFractal(
   png: PNGEncoder,
-  iterations: number,
-  zoom: number,
-  supersample: number,
+  params: FractalParams,
 ): Promise<void> {
+  let { iterations, zoom, supersample, zoomX, zoomY } = params
+
   await png.start()
 
   let width = png.width
   let height = png.height
 
   // increase the zoom rate. there's probably a better way to scale this
-  zoom = Math.floor(zoom ** 1.5)
-
-  // the target of our zooming
-  let centerX = -0.75
-  let centerY = 0.1
+  zoom = zoom ** 1.1
 
   // with supersampling, our 'canvas' is actually larger
   let ssWidth = width * supersample
@@ -36,10 +54,8 @@ export async function drawFractal(
       for (let xi = x0; xi < x0 + supersample; xi++) {
         for (let yi = y0; yi < y0 + supersample; yi++) {
           // project our image coordinates to coordinates on the imaginary plane
-          let cx =
-            (4 / zoom) * (xi / ssWidth - 0.5) + (centerX - centerX / zoom)
-          let cy =
-            (4 / zoom) * (yi / ssHeight - 0.5) + (centerY - centerY / zoom)
+          let cx = (4 / zoom) * (xi / ssWidth - 0.5) + (zoomX - zoomX / zoom)
+          let cy = (4 / zoom) * (yi / ssHeight - 0.5) + (zoomY - zoomY / zoom)
 
           // next point - if this trends towards infinity, we don't fill the pixel
           let zx = 0
@@ -47,22 +63,30 @@ export async function drawFractal(
 
           // iterate until the point escapes or we hit our limit ('infinity')
           let i = 0
-          let infinity = 20
+          let escape = 4
           let zn = 0
-          while (i < iterations && zn < infinity) {
+          // let threshold = 0.001 ** 2
+          // let derX = 1
+          // let derY = 0
+          while (i < iterations && zn < escape) {
             let xt = zx * zy
             zx = zx * zx - zy * zy + cx
             zy = 2 * xt + cy
-            zn = Math.sqrt(zx * zx + zy * zy)
+            // if (squared_modulus(derX, derY) < threshold){
+            //   i = iterations
+            //   break
+            // }
+            // derX = derX * 2 * zx
+            // derY = derY * 2 * zy
+            zn = squared_modulus(zx, zy)
             i++
           }
 
-          if (i >= iterations) {
+          if (i >= iterations)
             continue
-          }
 
           // fracIter is how far outside our bounds we escaped, for color smoothing
-          let fracIter = Math.log2(Math.log(zn) / Math.log(infinity))
+          let fracIter = Math.log2(Math.log(zn) / Math.log(escape))
 
           // norm is some value between 0 and 1, a ratio of how many of the iterations it took to escape
           const norm = Math.sqrt((i - fracIter) / iterations)
@@ -84,9 +108,9 @@ export async function drawFractal(
       g = Math.sqrt(g / supersample ** 2)
       b = Math.sqrt(b / supersample ** 2)
 
-      line[x*3] = r
-      line[x*3+1] = g
-      line[x*3+2] = b
+      line[x * 3] = r
+      line[x * 3 + 1] = g
+      line[x * 3 + 2] = b
     }
     png.writePixels(line)
   }
