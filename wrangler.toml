@@ -1,7 +1,10 @@
 name = "fractal"
 type = "webpack"
-account_id = "693dbd7e8bcc7ad68a10356f11ce8b07"
+account_id = "ed2c2efd7296b1730d245efb9bb4d677"
 workers_dev = true
 route = ""
 zone_id = ""
 webpack_config = "webpack.config.js"
+kv_namespaces = [
+  { binding = "FRACTAL_STORAGE", id = "092fd8ffbced43ba97dc83b466b2baea" }
+]

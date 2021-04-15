@@ -29,8 +29,8 @@
   },
   "dependencies": {
     "@cloudflare/wrangler": "^1.11.0",
-    "@types/pngjs": "^3.4.2",
-    "pngjs": "^5.0.0",
-    "pnglib-es6": "^1.0.1"
+    "@types/pako": "^1.0.1",
+    "crc-32": "^1.2.0",
+    "pako": "^1.0.11"
   }
 }

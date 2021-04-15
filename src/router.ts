@@ -2,11 +2,12 @@ export class Router {
   constructor(private routes: Route[]) {
   }
 
-  public async handle(request: Request): Promise<Response> {
+  public async handle(event: FetchEvent): Promise<Response> {
     for (let route of this.routes) {
-      let url = new URL(request.url)
-      if (url.pathname == route.path) {
-        return route.handler(request)
+      let url = new URL(event.request.url)
+      let match = route.match(url.pathname)
+      if (match) {
+        return route.handler(event, match)
       }
     }
 
@@ -17,13 +18,17 @@ export class Router {
 }
 
 export class Route {
-  path: string
+  path: RegExp
   handler: Handler
 
-  constructor(path: string, handler: Handler) {
+  constructor(path: RegExp, handler: Handler) {
     this.path = path
     this.handler = handler
   }
+
+  match(path: string): RegExpMatchArray | null {
+    return path.match(this.path)
+  }
 }
 
-export type Handler = (request: Request) => Promise<Response>
+export type Handler = (event: FetchEvent, args: RegExpMatchArray) => Promise<Response>
