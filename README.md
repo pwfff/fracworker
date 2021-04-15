@@ -2,6 +2,8 @@
 
 A Cloudflare Worker for generating mandlebrot fractals.
 
+Live [here](https://fractal.cyberpunk.workers.dev/?ss=2) (probably).
+
 ## Parameters
 
 The following query parameters change how the fractal is generated:
